@@ -49,8 +49,14 @@ pipeline {
                         git config user.name "Jenkins CI"
                         git pull origin main
                         git add chart/values.yaml
-                        git commit -m "Update image tag to version ${VERSION}"
-                        git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                        
+                        # Only commit if there are changes
+                        if git diff-index --quiet HEAD --; then
+                            echo "No changes to commit."
+                        else
+                            git commit -m "Update image tag to version ${VERSION}"
+                            git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                        fi
                         """
                     }
                 }
