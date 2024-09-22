@@ -56,16 +56,17 @@ pipeline {
 
         stage("Push changes to GitHub") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
-                    script {
-                        // Use shell commands to configure Git and push the changes
-                        sh """
-                        git config user.email "daryakerman200@gmail.com"
-                        git config user.name "Jenkins CI"
-                        git add chart/values.yaml
-                        git commit -m "Update image tag to version ${VERSION}"
-                        git push https://${GITHUB_USER}:${GITHUB_TOKEN_PSW}@github.com/${GITHUB_REPO}.git HEAD:main
-                        """
+                dir("${WORKSPACE}") {  // Ensure you're in the right directory
+                    withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
+                        script {
+                            sh """
+                            git config user.email "daryakerman200@gmail.com"
+                            git config user.name "Jenkins CI"
+                            git add chart/values.yaml
+                            git commit -m "Update image tag to version ${VERSION}"
+                            git push https://${GITHUB_USER}:${GITHUB_TOKEN_PSW}@github.com/${GITHUB_REPO}.git HEAD:main
+                            """
+                        }
                     }
                 }
             }
