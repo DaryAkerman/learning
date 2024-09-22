@@ -32,10 +32,12 @@ pipeline {
         stage("Update values.yaml") {
             steps {
                 script {
-                    // Use Groovy's built-in file handling to replace the version tag in values.yaml
                     def valuesFile = readFile 'chart/values.yaml'
                     valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
                     writeFile file: 'chart/values.yaml', text: valuesFile
+
+                    // Debug step to check the content of values.yaml
+                    sh "cat chart/values.yaml"
                 }
             }
         }
