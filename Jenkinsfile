@@ -60,7 +60,6 @@ pipeline {
                     script {
                         sh """
                         git config --global --add safe.directory /home/jenkins/agent/workspace/CI_PIPELINE_main
-                        git init
                         git config user.email "daryakerman200@gmail.com"
                         git config user.name "Jenkins CI"
                         git add chart/values.yaml
