@@ -61,7 +61,6 @@ pipeline {
                         sh """
                         git config --global --add safe.directory /home/jenkins/agent/workspace/CI_PIPELINE_main
                         git init
-                        git remote add origin https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git
                         git config user.email "daryakerman200@gmail.com"
                         git config user.name "Jenkins CI"
                         git add chart/values.yaml
