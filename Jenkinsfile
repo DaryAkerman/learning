@@ -32,8 +32,10 @@ pipeline {
         stage("Update values.yaml") {
             steps {
                 script {
-                    // Use sed to replace the tag in values.yaml with the current version
-                    sh "sed -i 's/tag: \"latest\"/tag: \"${VERSION}\"/' chart/values.yaml"
+                    // Use Groovy's built-in file handling to replace the version tag in values.yaml
+                    def valuesFile = readFile 'chart/values.yaml'
+                    valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
+                    writeFile file: 'chart/values.yaml', text: valuesFile
                 }
             }
         }
@@ -56,15 +58,22 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
                     script {
-                        // Ensure we're in the correct directory before running git commands
+                        // Use the git step to add, commit, and push changes
                         dir("${env.WORKSPACE}") {
-                            sh """
-                            git config user.email "daryakerman200@gmail.com"
-                            git config user.name "Jenkins CI"
-                            git add chart/values.yaml
-                            git commit -m "Update image tag to version ${VERSION}"
-                            git push https://${GITHUB_USER}:${GITHUB_TOKEN_PSW}@github.com/${GITHUB_REPO}.git HEAD:main
-                            """
+                            // Set Git configuration
+                            gitConfig(userEmail: "daryakerman200@gmail.com", userName: "Jenkins CI")
+
+                            // Stage the changes
+                            gitAdd(patterns: "chart/values.yaml")
+
+                            // Commit the changes
+                            gitCommit(message: "Update image tag to version ${VERSION}")
+
+                            // Push the changes to GitHub securely
+                            gitPush(
+                                url: "https://${GITHUB_USER}:${GITHUB_TOKEN_PSW}@github.com/${GITHUB_REPO}.git",
+                                credentialsId: 'github-creds'
+                            )
                         }
                     }
                 }
