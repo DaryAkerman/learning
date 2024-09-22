@@ -33,39 +33,30 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
                     script {
-                        // Update the values.yaml file and check if the tag has changed
-                        def valuesFile = readFile 'chart/values.yaml'
-                        if (valuesFile.contains('tag: "latest"') || !valuesFile.contains("tag: \"${VERSION}\"")) {
-                            valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
-                            writeFile file: 'chart/values.yaml', text: valuesFile
-                            echo "Updated values.yaml with the new version tag: ${VERSION}"
-                        } else {
-                            echo "No need to update values.yaml, version is already up to date."
-                        }
-
-                        // Debug step to check the content of values.yaml
-                        sh "cat chart/values.yaml"
-
-                        // Configure Git, force refresh index and commit
+                        // Use sed to directly update the version tag in values.yaml
                         sh """
+                        # Ensure you are on the correct branch
                         git config --global --add safe.directory $WORKSPACE
-                        git checkout main  # Ensure you're on the main branch
+                        git checkout main
+                        
+                        # Update the tag using sed
+                        sed -i 's/tag: ".*"/tag: "${VERSION}"/' chart/values.yaml
+                        
+                        # Verify the updated values.yaml
+                        cat chart/values.yaml
+
+                        # Configure Git
                         git config user.email "daryakerman200@gmail.com"
                         git config user.name "Jenkins CI"
                         git pull origin main
                         
-                        # Refresh Git index and ensure detection of changes
+                        # Add and commit the changes
+                        git add chart/values.yaml
                         git update-index --refresh
 
-                        # Check the Git status to ensure the file is tracked and changed
-                        git status
-
-                        # Force add the values.yaml file to Git
-                        git add chart/values.yaml
-
-                        # Check if the file is staged for commit
+                        # Check for staged changes
                         if git diff --cached --name-only | grep -q 'chart/values.yaml'; then
-                            echo "File has changed, committing..."
+                            echo "Changes detected, committing..."
                             git commit -m "Update image tag to version ${VERSION}"
                             git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
                         else
