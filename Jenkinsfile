@@ -59,7 +59,8 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
                     script {
                         sh """
-                        git config --global --add safe.directory /home/jenkins/agent/workspace/CI_PIPELINE_main
+                        git config --global --add safe.directory $WORKSPACE
+                        git checkout main  # Ensure you're on the main branch
                         git config user.email "daryakerman200@gmail.com"
                         git config user.name "Jenkins CI"
                         git add chart/values.yaml
