@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Welcome to my site, please sure to use /YOURNAME to get a nice page with your name.\nAlso, you can do /main in order to access the best SITE ever!!"
+    return render_template('jaja.html')
 
 @app.route('/<name>')
 def getName(name):
