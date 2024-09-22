@@ -29,15 +29,30 @@ pipeline {
             }
         }
 
-        stage("Update values.yaml") {
+        stage("Update and Push values.yaml") {
             steps {
-                script {
-                    def valuesFile = readFile 'chart/values.yaml'
-                    valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
-                    writeFile file: 'chart/values.yaml', text: valuesFile
+                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
+                    script {
+                        // Update the values.yaml file
+                        def valuesFile = readFile 'chart/values.yaml'
+                        valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
+                        writeFile file: 'chart/values.yaml', text: valuesFile
 
-                    // Debug step to check the content of values.yaml
-                    sh "cat chart/values.yaml"
+                        // Debug step to check the content of values.yaml
+                        sh "cat chart/values.yaml"
+
+                        // Configure Git, commit, and push changes to GitHub
+                        sh """
+                        git config --global --add safe.directory $WORKSPACE
+                        git checkout main  # Ensure you're on the main branch
+                        git config user.email "daryakerman200@gmail.com"
+                        git config user.name "Jenkins CI"
+                        git pull origin main
+                        git add chart/values.yaml
+                        git commit -m "Update image tag to version ${VERSION}"
+                        git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                        """
+                    }
                 }
             }
         }
@@ -51,25 +66,6 @@ pipeline {
                     docker.withRegistry('https://registry.hub.docker.com', 'docker-creds') {
                         dockerImage.push("${VERSION}")
                         dockerImage.push("latest")
-                    }
-                }
-            }
-        }
-
-        stage("Push changes to GitHub") {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
-                    script {
-                        sh """
-                        git config --global --add safe.directory $WORKSPACE
-                        git checkout main  # Ensure you're on the main branch
-                        git config user.email "daryakerman200@gmail.com"
-                        git config user.name "Jenkins CI"
-                        git pull origin main
-                        git add chart/values.yaml
-                        git commit -m "Update image tag to version ${VERSION}"
-                        git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
-                        """
                     }
                 }
             }
