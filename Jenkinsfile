@@ -33,10 +33,15 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
                     script {
-                        // Update the values.yaml file
+                        // Update the values.yaml file and check if the tag has changed
                         def valuesFile = readFile 'chart/values.yaml'
-                        valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
-                        writeFile file: 'chart/values.yaml', text: valuesFile
+                        if (valuesFile.contains('tag: "latest"') || !valuesFile.contains("tag: \"${VERSION}\"")) {
+                            valuesFile = valuesFile.replace('tag: "latest"', "tag: \"${VERSION}\"")
+                            writeFile file: 'chart/values.yaml', text: valuesFile
+                            echo "Updated values.yaml with the new version tag: ${VERSION}"
+                        } else {
+                            echo "No need to update values.yaml, version is already up to date."
+                        }
 
                         // Debug step to check the content of values.yaml
                         sh "cat chart/values.yaml"
