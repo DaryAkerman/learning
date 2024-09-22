@@ -41,21 +41,30 @@ pipeline {
                         // Debug step to check the content of values.yaml
                         sh "cat chart/values.yaml"
 
-                        // Configure Git, commit, and push changes to GitHub
+                        // Configure Git, force refresh index and commit
                         sh """
                         git config --global --add safe.directory $WORKSPACE
                         git checkout main  # Ensure you're on the main branch
                         git config user.email "daryakerman200@gmail.com"
                         git config user.name "Jenkins CI"
                         git pull origin main
-                        git add chart/values.yaml
                         
-                        # Only commit if there are changes
-                        if git diff-index --quiet HEAD --; then
-                            echo "No changes to commit."
-                        else
+                        # Refresh Git index and ensure detection of changes
+                        git update-index --refresh
+
+                        # Check the Git status to ensure the file is tracked and changed
+                        git status
+
+                        # Force add the values.yaml file to Git
+                        git add chart/values.yaml
+
+                        # Check if the file is staged for commit
+                        if git diff --cached --name-only | grep -q 'chart/values.yaml'; then
+                            echo "File has changed, committing..."
                             git commit -m "Update image tag to version ${VERSION}"
                             git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                        else
+                            echo "No changes detected in values.yaml"
                         fi
                         """
                     }
