@@ -12,7 +12,6 @@ pipeline {
         DOCKER_IMAGE = 'winterzone2/learningjenkins'
         GITHUB_REPO = 'DaryAkerman/learning'
         VERSION = "1.0.${BUILD_NUMBER}"
-        GITHUB_CREDS = credentials('github-creds')
     }
 
     stages {
@@ -57,13 +56,19 @@ pipeline {
 
         stage("Push changes to GitHub") {
             steps {
-                sh """
-                git config user.email "daryakerman200@gmail.com"
-                git config user.name "Jenkins CI"
-                git add chart/values.yaml
-                git commit -m "Update image tag to version ${VERSION}"
-                git push https://$GITHUB_CREDS_USR:$GITHUB_CREDS_PSW@github.com/${GITHUB_REPO}.git HEAD:main
-                """
+                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN_PSW')]) {
+                    script {
+                        sh """
+                        git init  # Initialize Git repository if needed
+                        git remote add origin https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git
+                        git config user.email "daryakerman200@gmail.com"
+                        git config user.name "Jenkins CI"
+                        git add chart/values.yaml
+                        git commit -m "Update image tag to version ${VERSION}"
+                        git push https://$GITHUB_USER:$GITHUB_TOKEN_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                        """
+                    }
+                }
             }
         }
     }
