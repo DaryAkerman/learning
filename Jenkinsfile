@@ -57,15 +57,13 @@ pipeline {
 
         stage("Push changes to GitHub") {
             steps {
-                dir("${WORKSPACE}") {
-                    sh """
-                    git config user.email "daryakerman200@gmail.com"
-                    git config user.name "Jenkins CI"
-                    git add chart/values.yaml
-                    git commit -m "Update image tag to version ${VERSION}"
-                    git push https://$GITHUB_CREDS_USR:$GITHUB_CREDS_PSW@github.com/${GITHUB_REPO}.git HEAD:main
-                    """
-                }
+                sh """
+                git config user.email "daryakerman200@gmail.com"
+                git config user.name "Jenkins CI"
+                git add chart/values.yaml
+                git commit -m "Update image tag to version ${VERSION}"
+                git push https://$GITHUB_CREDS_USR:$GITHUB_CREDS_PSW@github.com/${GITHUB_REPO}.git HEAD:main
+                """
             }
         }
     }
